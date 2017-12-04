@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">Nearby Receiver</string>
+    <string name="error_missing_permissions">Missing Permissions</string>
+</resources>

@@ -1,15 +1,15 @@
-package com.google.location.nearby.apps.walkietalkie;
-
-import static android.os.Process.THREAD_PRIORITY_AUDIO;
-import static android.os.Process.setThreadPriority;
-import static com.google.location.nearby.apps.walkietalkie.Constants.TAG;
+package li.zoss.bsc.bfh.nearby_receiver;
 
 import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioTrack;
 import android.util.Log;
+
 import java.io.IOException;
 import java.io.InputStream;
+
+import static android.os.Process.THREAD_PRIORITY_AUDIO;
+import static android.os.Process.setThreadPriority;
 
 /**
  * A fire-once class. When created, you must pass a {@link InputStream}. Once {@link #start()} is
@@ -19,7 +19,7 @@ import java.io.InputStream;
 public class AudioPlayer {
   /** The audio stream we're reading from. */
   private final InputStream mInputStream;
-
+  private String TAG = "AudioPlayer";
   /**
    * If true, the background thread will continue to loop and play audio. Once false, the thread
    * will shut down.

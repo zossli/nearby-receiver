@@ -1,4 +1,4 @@
-package com.google.location.nearby.apps.walkietalkie;
+package li.zoss.bsc.bfh.nearby_receiver;
 
 /**
  * A buffer that grabs the smallest supported sample rate for {@link android.media.AudioTrack} and
