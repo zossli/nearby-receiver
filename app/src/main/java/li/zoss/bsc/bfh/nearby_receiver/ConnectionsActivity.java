@@ -41,7 +41,7 @@ import java.util.Map;
 import java.util.Set;
 
 /** A class that connects to Nearby Connections and provides convenience methods and callbacks. */
-public abstract class ConnectionsActivity extends AppCompatActivity
+public abstract class   ConnectionsActivity extends AppCompatActivity
         implements GoogleApiClient.OnConnectionFailedListener, GoogleApiClient.ConnectionCallbacks {
     private String TAG = "ConnectionsActivity";
 
