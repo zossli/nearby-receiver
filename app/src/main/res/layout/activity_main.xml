@@ -1,90 +1,60 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+<LinearLayout xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent"
+    android:orientation="vertical"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/drawer_layout"
     android:layout_height="match_parent"
-    tools:context="li.zoss.bsc.bfh.nearby_receiver.MainActivity">
+    android:layout_width="match_parent">
 
-    <LinearLayout
-        android:id="@+id/linearLayout"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:orientation="vertical"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
 
-        <android.support.constraint.ConstraintLayout
+        <android.support.v7.widget.Toolbar
+            android:id="@+id/toolbar"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="wrap_content"
+            android:background="?attr/colorPrimary"
+            android:minHeight="?attr/actionBarSize">
 
-            <TextView
-                android:id="@+id/txtState"
+            <ImageView
+                android:id="@+id/blsLogo"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="8dp"
-                android:layout_marginTop="8dp"
-                android:text="State:"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/txtID" />
+                android:layout_gravity="center"
+                android:contentDescription="@string/bls"
+                android:src="@drawable/ic_bls" />
+        </android.support.v7.widget.Toolbar>
 
-            <TextView
-                android:id="@+id/txtIDvalue"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="8dp"
-                android:layout_marginTop="8dp"
-                app:layout_constraintStart_toEndOf="@+id/txtID"
-                app:layout_constraintTop_toTopOf="parent" />
+        <ImageButton
+            android:id="@+id/connectToTrain"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"
+            android:layout_marginEnd="11dp"
+            android:background="#00000000"
+            android:scaleType="fitCenter"
+            app:srcCompat="@drawable/ic_nearby_white" />
 
-            <TextView
-                android:id="@+id/txtStatevalue"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="8dp"
-                android:layout_marginTop="8dp"
-                app:layout_constraintStart_toEndOf="@+id/txtState"
-                app:layout_constraintTop_toBottomOf="@+id/txtIDvalue" />
+        <ProgressBar
+            android:id="@+id/progressBar"
+            style="?android:attr/progressBarStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignEnd="@+id/connectToTrain"
+            android:layout_centerVertical="true"
+            tools:visibility="gone" />
 
-            <TextView
-                android:id="@+id/txtID"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="8dp"
-                android:layout_marginTop="8dp"
-                android:text="ID:"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
-        </android.support.constraint.ConstraintLayout>
+    </RelativeLayout>
 
-        <ScrollView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+    <ImageView
+        android:id="@+id/imageView2"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:contentDescription="@string/mock"
+        app:srcCompat="@drawable/bg_chats"
+        />
 
-            <TextView
-                android:id="@+id/txtConnectedDevices"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:scrollHorizontally="false"
-                android:scrollbars="vertical"
-                android:text="TextView" />
-
-        </ScrollView>
-
-        <ScrollView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
-
-            <TextView
-                android:id="@+id/txtLog"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:scrollHorizontally="false"
-                android:scrollbars="vertical"
-                android:text="TextView" />
-        </ScrollView>
-    </LinearLayout>
-
-</android.support.constraint.ConstraintLayout>
+</LinearLayout>

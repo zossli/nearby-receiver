@@ -42,7 +42,7 @@ import java.util.Set;
 
 /** A class that connects to Nearby Connections and provides convenience methods and callbacks. */
 public abstract class   ConnectionsActivity extends AppCompatActivity
-        implements GoogleApiClient.OnConnectionFailedListener, GoogleApiClient.ConnectionCallbacks {
+        implements GoogleApiClient.OnConnectionFailedListener, GoogleApiClient.ConnectionCallbacks{
     private String TAG = "ConnectionsActivity";
 
     /**
@@ -57,6 +57,7 @@ public abstract class   ConnectionsActivity extends AppCompatActivity
                     Manifest.permission.ACCESS_WIFI_STATE,
                     Manifest.permission.CHANGE_WIFI_STATE,
                     Manifest.permission.ACCESS_COARSE_LOCATION,
+                    Manifest.permission.WRITE_EXTERNAL_STORAGE
             };
 
     private static final int REQUEST_CODE_REQUIRED_PERMISSIONS = 1;
@@ -65,7 +66,7 @@ public abstract class   ConnectionsActivity extends AppCompatActivity
      * The connection strategy we'll use for Nearby Connections. In this case, we've decided on
      * P2P_STAR, which is a combination of Bluetooth Classic and WiFi Hotspots.
      */
-    private static final Strategy STRATEGY = Strategy.P2P_STAR;
+    private static final Strategy STRATEGY = Strategy.P2P_CLUSTER;
 
     /** We'll talk to Nearby Connections through the GoogleApiClient. */
     private GoogleApiClient mGoogleApiClient;
@@ -153,6 +154,7 @@ public abstract class   ConnectionsActivity extends AppCompatActivity
                     Log.d(TAG,
                             String.format(
                                     "onPayloadTransferUpdate(endpointId=%s, update=%s)", endpointId, update));
+                    onReceiveUpdate(mEstablishedConnections.get(endpointId), update);
                 }
             };
     private AudioPlayer mAudioPlayer;
@@ -233,54 +235,6 @@ public abstract class   ConnectionsActivity extends AppCompatActivity
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
     }
 
-    /**
-     * Sets the device to advertising mode. It will broadcast to other devices in discovery mode.
-     * Either {@link #onAdvertisingStarted()} or {@link #onAdvertisingFailed()} will be called once
-     * we've found out if we successfully entered this mode.
-     */
-    protected void startAdvertising() {
-        mIsAdvertising = true;
-        Nearby.Connections.startAdvertising(
-                mGoogleApiClient,
-                getName(),
-                getServiceId(),
-                mConnectionLifecycleCallback,
-                new AdvertisingOptions(STRATEGY))
-                .setResultCallback(
-                        new ResultCallback<Connections.StartAdvertisingResult>() {
-                            @Override
-                            public void onResult(@NonNull Connections.StartAdvertisingResult result) {
-                                if (result.getStatus().isSuccess()) {
-                                    Log.v(TAG,"Now advertising endpoint " + result.getLocalEndpointName());
-                                    onAdvertisingStarted();
-                                } else {
-                                    mIsAdvertising = false;
-                                    Log.w(TAG,
-                                            String.format(
-                                                    "Advertising failed. Received status %s.",
-                                                    ConnectionsActivity.toString(result.getStatus())));
-                                    onAdvertisingFailed();
-                                }
-                            }
-                        });
-    }
-
-    /** Stops advertising. */
-    protected void stopAdvertising() {
-        mIsAdvertising = false;
-        Nearby.Connections.stopAdvertising(mGoogleApiClient);
-    }
-
-    /** @return True if currently advertising. */
-    protected boolean isAdvertising() {
-        return mIsAdvertising;
-    }
-
-    /** Advertising has successfully started. Override this method to act on the event. */
-    protected void onAdvertisingStarted() {}
-
-    /** Advertising has failed to start. Override this method to act on the event. */
-    protected void onAdvertisingFailed() {}
 
     /**
      * A pending connection with a remote endpoint has been created. Use {@link ConnectionInfo} for
@@ -485,39 +439,21 @@ public abstract class   ConnectionsActivity extends AppCompatActivity
     }
 
     /**
-     * Sends a {@link Payload} to all currently connected endpoints.
-     *
-     * @param payload The data you want to send.
-     */
-    protected void send(Payload payload) {
-        send(payload, mEstablishedConnections.keySet());
-    }
-
-    private void send(Payload payload, Set<String> endpoints) {
-        Nearby.Connections.sendPayload(mGoogleApiClient, new ArrayList<>(endpoints), payload)
-                .setResultCallback(
-                        new ResultCallback<Status>() {
-                            @Override
-                            public void onResult(@NonNull Status status) {
-                                if (!status.isSuccess()) {
-                                    Log.w(TAG,
-                                            String.format(
-                                                    "sendUnreliablePayload failed. %s",
-                                                    ConnectionsActivity.toString(status)));
-                                }
-                            }
-                        });
-    }
-
-    /**
      * Someone connected to us has sent us data. Override this method to act on the event.
      *
      * @param endpoint The sender.
      * @param payload The data.
      */
     protected void onReceive(Endpoint endpoint, Payload payload) {
-        Log.d(TAG,"onReceive: received payload from endpoint " + endpoint);
-        Log.d(TAG,"onReceive: the payload was "+payload);
+    }
+
+    /**
+     * Someone connected to us has sent us data. Override this method to act on the event.
+     *
+     * @param endpoint The sender.
+     * @param update The Update.
+     */
+    protected void onReceiveUpdate(Endpoint endpoint, PayloadTransferUpdate update) {
     }
 
     /**
