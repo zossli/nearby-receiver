@@ -11,7 +11,7 @@ before_install:
 - chmod +x gradlew
 
 script:
-- "./gradlew clean build nearbyReceiver -PdisablePreDex --stacktrace"
+- "./gradlew clean build nearby-receiver -PdisablePreDex --stacktrace"
 
 notifications:
   email: true
