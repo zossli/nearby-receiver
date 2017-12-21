@@ -304,6 +304,7 @@ public class MainActivity extends ConnectionsActivity {
             case CONNECTED:
                 btnconnectToTrain.setImageResource(R.drawable.ic_nearby_color);
                 progressBar.setVisibility(View.GONE);
+                stopDiscovering();
                 break;
             case ERROR:
                 break;
