@@ -6,14 +6,6 @@
         <item name="colorPrimary">@color/colorPrimary</item>
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
         <item name="colorAccent">@color/colorAccent</item>
-        <item name="android:navigationBarColor">@color/colorPrimary</item>
-        <item name="android:statusBarColor">@color/colorStatusbar</item>
-        <item name="android:colorForeground">@color/colorPrimary</item>
-        <item name="android:textColorPrimary">@color/colorPrimaryDark</item>
-        <item name="android:colorPrimary">@color/colorPrimary</item>
-        <item name="android:colorPrimaryDark">@color/colorAccent</item>
-        <item name="android:colorAccent">@color/colorPrimaryDark</item>
-        <item name="android:colorBackground">@android:color/white</item>
     </style>
 
 </resources>

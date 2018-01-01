@@ -1,8 +1,6 @@
 <resources>
-    <string name="app_name">FIS</string>
-    <string name="error_missing_permissions">Missing Permissions</string>
-    <string name="bls">BLS</string>
-    <string name="mock">mock</string>
-    <string name="dialect_notReady">Mir si no grad nid nache. Tschuudigung.</string>
-    <string name="channel_name">channelName</string>
+    <string name="app_name">Nearby Information System</string>
+    <string name="nearby_information_system">Nearby Information System</string>
+    <string name="local_service_connected">Service Connected</string>
+    <string name="missingPermission">Missing Permissions</string>
 </resources>
