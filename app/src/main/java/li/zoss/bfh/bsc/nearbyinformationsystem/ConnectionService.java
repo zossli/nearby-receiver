@@ -31,6 +31,7 @@ import com.google.android.gms.nearby.connection.PayloadCallback;
 import com.google.android.gms.nearby.connection.PayloadTransferUpdate;
 import com.google.android.gms.nearby.connection.Strategy;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Locale;
@@ -78,6 +79,13 @@ public abstract class ConnectionService extends Service implements GoogleApiClie
     /** True if we are advertising. */
     private boolean mIsAdvertising = false;
 
+    /**
+     *
+     * @param intent
+     * @param flags
+     * @param startId
+     * @return
+     */
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         if (mGoogleApiClient == null) {
@@ -89,12 +97,10 @@ public abstract class ConnectionService extends Service implements GoogleApiClie
                             .build();
             mGoogleApiClient.connect();
         }
-        else
-        {
-            Log.i(TAG, "onStartCommand: not null!!! mGoogleApiClient.isConnected():"+mGoogleApiClient.isConnected());
-        }
+        else if (mGoogleApiClient.isConnected())
+            mGoogleApiClient.connect();
 
-        return Service.START_NOT_STICKY;
+        return Service.START_STICKY;
     }
 
     /** Callbacks for connections to other devices. */
@@ -191,6 +197,7 @@ public abstract class ConnectionService extends Service implements GoogleApiClie
                 String.format(
                         "onConnectionFailed(%s)",
                         ConnectionService.toString(new Status(connectionResult.getErrorCode()))));
+        mGoogleApiClient.connect();
     }
 
 
@@ -318,16 +325,40 @@ public abstract class ConnectionService extends Service implements GoogleApiClie
         mEstablishedConnections.remove(endpoint.getId());
     }
 
-    protected void stopAllEndpoints()
-    {
-        Log.i(TAG, "onTaskRemoved: ");
-        disconnectFromAllEndpoints();
-        stopAllEndpoints();
-        stopDiscovering();
-        Nearby.Connections.stopAllEndpoints(mGoogleApiClient);
-        mGoogleApiClient.disconnect();
-    }
 
+    protected void send(Payload payload) {
+        send(payload, mEstablishedConnections.keySet());
+    }
+    protected void send(Payload payload,  String endpointID) {
+        Nearby.Connections.sendPayload(mGoogleApiClient, endpointID, payload)
+                .setResultCallback(
+                        new ResultCallback<Status>() {
+                            @Override
+                            public void onResult(@NonNull Status status) {
+                                if (!status.isSuccess()) {
+                                    Log.w(TAG,
+                                            String.format(
+                                                    "sendUnreliablePayload failed. %s",
+                                                    ConnectionService.toString(status)));
+                                }
+                            }
+                        });
+    }
+    protected void send(Payload payload, Set<String> endpoints) {
+        Nearby.Connections.sendPayload(mGoogleApiClient, new ArrayList<>(endpoints), payload)
+                .setResultCallback(
+                        new ResultCallback<Status>() {
+                            @Override
+                            public void onResult(@NonNull Status status) {
+                                if (!status.isSuccess()) {
+                                    Log.w(TAG,
+                                            String.format(
+                                                    "sendUnreliablePayload failed. %s",
+                                                    ConnectionService.toString(status)));
+                                }
+                            }
+                        });
+    }
     protected void disconnectFromAllEndpoints() {
         for (Endpoint endpoint : mEstablishedConnections.values()) {
             Nearby.Connections.disconnectFromEndpoint(mGoogleApiClient, endpoint.getId());
@@ -426,7 +457,12 @@ public abstract class ConnectionService extends Service implements GoogleApiClie
     protected void onReceiveUpdate(Endpoint endpoint, PayloadTransferUpdate update) {
     }
 
-
+    @Override
+    public void onDestroy() {
+        if(mGoogleApiClient!=null)
+        mGoogleApiClient.disconnect();
+        super.onDestroy();
+    }
 
     /** @return The client's name. Visible to others when connecting. */
     protected abstract String getName();
@@ -453,8 +489,6 @@ public abstract class ConnectionService extends Service implements GoogleApiClie
                         ? status.getStatusMessage()
                         : ConnectionsStatusCodes.getStatusCodeString(status.getStatusCode()));
     }
-
-
 
 
     /** Represents a device we can talk to. */
@@ -497,19 +531,5 @@ public abstract class ConnectionService extends Service implements GoogleApiClie
         }
     }
 
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-    }
-
-    @Override
-    public boolean onUnbind(Intent intent) {
-        return super.onUnbind(intent);
-    }
-
-    @Override
-    public void onLowMemory() {
-        super.onLowMemory();
-    }
 
 }

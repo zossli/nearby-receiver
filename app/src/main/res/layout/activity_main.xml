@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:app="http://schemas.android.com/apk/res-auto"
+<android.support.constraint.ConstraintLayout xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:orientation="vertical"
     xmlns:android="http://schemas.android.com/apk/res/android"
@@ -7,51 +7,95 @@
     android:layout_height="match_parent"
     android:layout_width="match_parent">
 
-    <RelativeLayout
+    <android.support.v7.widget.Toolbar
+        android:id="@+id/toolbar"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="56dp"
+        android:layout_alignParentTop="true"
+        android:background="@color/colorPrimary"
+        android:minHeight="?attr/actionBarSize"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
 
-        <android.support.v7.widget.Toolbar
-            android:id="@+id/toolbar"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:background="@color/colorPrimary"
-            android:minHeight="?attr/actionBarSize">
-
-            <ImageView
-                android:id="@+id/blsLogo"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:contentDescription="@string/nearby_information_system"
-                android:src="@drawable/logo" />
-        </android.support.v7.widget.Toolbar>
-
-        <ImageButton
-            android:id="@+id/btnConnect"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:layout_alignParentEnd="true"
-            android:layout_alignParentRight="true"
-            android:layout_alignParentTop="true"
-            android:layout_marginEnd="11dp"
-            android:layout_marginRight="11dp"
-            android:background="#00000000"
-            android:scaleType="fitCenter"
-            app:srcCompat="@drawable/ic_nearby_white" />
-
-        <ProgressBar
-            android:id="@+id/progressBar"
-            style="?android:attr/progressBarStyle"
+        <ImageView
+            android:id="@+id/nearbyInfo"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_alignEnd="@+id/btnConnect"
-            android:layout_centerVertical="true"
-            tools:visibility="gone"
-            android:layout_alignRight="@+id/btnConnect" />
+            android:layout_gravity="center"
+            android:contentDescription="@string/nearby_information_system"
+            android:src="@drawable/logo" />
+    </android.support.v7.widget.Toolbar>
 
-    </RelativeLayout>
+    <ImageButton
+        android:id="@+id/btnConnect"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_alignBottom="@+id/toolbar"
+        android:layout_alignParentEnd="true"
+        android:layout_marginEnd="16dp"
+        android:layout_marginTop="8dp"
+        android:background="#00000000"
+        android:contentDescription="@string/nearbyconnection"
+        android:scaleType="fitCenter"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:srcCompat="@drawable/ic_nearby_white" />
+
+    <ProgressBar
+        android:id="@+id/progressBar"
+        style="@style/Widget.AppCompat.ProgressBar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        app:layout_constraintEnd_toEndOf="@+id/btnConnect"
+        app:layout_constraintTop_toTopOf="@+id/btnConnect" />
+
+    <TextView
+        android:id="@+id/txtTrainStatic"
+        android:layout_width="70dp"
+        android:layout_height="20dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="16dp"
+        android:text="Zug"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/toolbar" />
+
+    <TextView
+        android:id="@+id/txtDirectionStatic"
+        android:layout_width="70dp"
+        android:layout_height="20dp"
+        android:layout_marginStart="16dp"
+        android:text="Richtung"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/txtTrainStatic" />
+
+    <TextView
+        android:id="@+id/txtTrain"
+        android:layout_width="120dp"
+        android:layout_height="20dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="16dp"
+        app:layout_constraintStart_toEndOf="@+id/txtTrainStatic"
+        app:layout_constraintTop_toBottomOf="@+id/toolbar" />
+
+    <TextView
+        android:id="@+id/txtDirection"
+        android:layout_width="120dp"
+        android:layout_height="20dp"
+        android:layout_marginStart="8dp"
+        app:layout_constraintStart_toEndOf="@+id/txtDirectionStatic"
+        app:layout_constraintTop_toBottomOf="@+id/txtTrain" />
+
+    <Button
+        android:id="@+id/btnRequestStop"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="16dp"
+        android:text="Button"
+        app:layout_constraintStart_toEndOf="@+id/txtTrain"
+        app:layout_constraintTop_toBottomOf="@+id/toolbar" />
 
 
-
-</LinearLayout>
+</android.support.constraint.ConstraintLayout>

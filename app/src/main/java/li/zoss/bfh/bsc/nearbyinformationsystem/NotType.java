@@ -1,11 +1,11 @@
 package li.zoss.bfh.bsc.nearbyinformationsystem;
 
-/**
- * Created by Reto on 31.12.2017.
- */
-
 enum NotType {
     NEXT_STOP,
+    REQUEST_STOP,
     DELAY,
-    INFO
+    INFO,
+    GET_TRAIN,
+    TRAIN_INFO,
+    CONNECTED_TO_SYSTEM
 }

@@ -14,20 +14,22 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.widget.Button;
 import android.widget.ImageButton;
+import android.widget.TextView;
 import android.widget.Toast;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
+    public static final String INTENT_REFRESH_TRAIN_INFO = "li.zoss.bfh.bsc.nearbyinformationsystem.refreshTrainInfoView";
+    public static final String INTENT_REFRESH_TRAIN_CONNECTED = "li.zoss.bfh.bsc.nearbyinformationsystem.isConnectedToTrain";
+
     private NearbyService mBoundService;
     private boolean mIsBound;
     private Context mContext;
     private ServiceConnection mConnection;
 
-    private ImageButton btn;
-    private String TAG  = "MainActivity";
-
-    private BroadcastReceiver mReceiver;
-
+    private ImageButton btnConnectToNearbySystem;
+    private String TAG = "MainActivity";
 
     /**
      * These permissions are required before connecting to Nearby Connections. Only {@link
@@ -35,7 +37,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
      * granted just by having them in our AndroidManfiest.xml
      */
     private static final String[] REQUIRED_PERMISSIONS =
-            new String[] {
+            new String[]{
                     Manifest.permission.BLUETOOTH,
                     Manifest.permission.BLUETOOTH_ADMIN,
                     Manifest.permission.ACCESS_WIFI_STATE,
@@ -45,6 +47,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private static final int REQUEST_CODE_REQUIRED_PERMISSIONS = 1;
     private Intent intentService;
+    private Button btnRequestStop;
+    private TextView txtTrainInfo, txtTrainDirection;
+    private BroadcastReceiver mBroadcastReceiver;
+    private boolean startWasRequested = false;
 
 
     @Override
@@ -53,9 +59,19 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         setContentView(R.layout.activity_main);
         mContext = this.getBaseContext();
 
+        //Just create service intent for later use.
+        intentService = new Intent(this, NearbyService.class);
 
-        btn = findViewById(R.id.btnConnect);
-        btn.setOnClickListener(this);
+
+        btnConnectToNearbySystem = findViewById(R.id.btnConnect);
+        btnConnectToNearbySystem.setOnClickListener(this);
+
+        btnRequestStop = findViewById(R.id.btnRequestStop);
+        btnRequestStop.setOnClickListener(this);
+
+        txtTrainInfo = findViewById(R.id.txtTrain);
+        txtTrainDirection = findViewById(R.id.txtDirection);
+
     }
 
 
@@ -68,7 +84,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     protected String[] getRequiredPermissions() {
         return REQUIRED_PERMISSIONS;
     }
-    /** @return True if the app was granted all the permissions. False otherwise. */
+
+    /**
+     * @return True if the app was granted all the permissions. False otherwise.
+     */
     public static boolean hasPermissions(Context context, String... permissions) {
         for (String permission : permissions) {
             if (ContextCompat.checkSelfPermission(context, permission)
@@ -78,7 +97,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
         return true;
     }
-    /** The user has accepted (or denied) our permission request. */
+
+    /**
+     * The user has accepted (or denied) our permission request.
+     */
     @CallSuper
     @Override
     public void onRequestPermissionsResult(
@@ -99,13 +121,36 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        stopService(intentService);
+        unregisterReceiver(mBroadcastReceiver);
+        if (intentService != null)
+            stopService(intentService);
         Log.i(TAG, "onDestroy: ");
     }
+
     @Override
     protected void onStart() {
         super.onStart();
-        Log.i(TAG, "onStart: ");
+        if (mBroadcastReceiver == null) mBroadcastReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                Log.i(TAG, "onReceive broadcast..." + intent);
+                if (intent.getAction().equals(INTENT_REFRESH_TRAIN_INFO)) {
+                    Log.i(TAG, "onReceive: Broadcast was "+INTENT_REFRESH_TRAIN_INFO);
+                    final String trainInfo = intent.getStringExtra("trainInfo");
+                    final String trainDirection = intent.getStringExtra("trainDirection");
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            refreshView(trainInfo, trainDirection);
+                        }
+                    });
+                }
+            }
+        };
+        IntentFilter intentFilter = new IntentFilter(INTENT_REFRESH_TRAIN_INFO);
+        registerReceiver(mBroadcastReceiver, intentFilter);
+
+        Log.i(TAG, "onStart: StartWasRequested:" + startWasRequested);
     }
 
     @Override
@@ -117,28 +162,61 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     protected void onResume() {
         super.onResume();
-        Log.i(TAG, "onResume: ");
+        Log.i(TAG, "onResume:");
+        if (startWasRequested) startNearbyService();
+    }
+
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putBoolean("INTENT_START_WAS_REQUESTED", true);
+        Log.i(TAG, "onSaveInstanceState: ");
+    }
+
+    @Override
+    protected void onRestoreInstanceState(Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+        // recovering the instance state
+        Log.i(TAG, "onRestoreInstanceState: ");
+        if (savedInstanceState != null) {
+            startWasRequested = savedInstanceState.getBoolean("INTENT_START_WAS_REQUESTED");
+        }
+        Log.i(TAG, "startWasRequested" + startWasRequested);
     }
 
     @Override
     protected void onPause() {
         super.onPause();
         Log.i(TAG, "onPause: ");
+        startWasRequested = true;
+
     }
 
     @Override
     public void onClick(View v) {
-        Log.i(TAG, "clicked: yes");
+        if (btnRequestStop.equals(v)) {
+
+        } else if (btnConnectToNearbySystem.equals(v)) {
+            startNearbyService();
+        }
+
+    }
+
+    private void startNearbyService() {
         if (hasPermissions(this, getRequiredPermissions())) {
             Log.i(TAG, "hasPermissions");
             // use this to start and trigger a service
-            intentService= new Intent(this, NearbyService.class);
             startService(intentService);
 
         } else {
             requestPermissions(getRequiredPermissions(), REQUEST_CODE_REQUIRED_PERMISSIONS);
-
+            startWasRequested = true;
         }
     }
 
+    public void refreshView(String trainInfo, String trainDirection) {
+        txtTrainInfo.setText(trainInfo);
+        txtTrainDirection.setText(trainDirection);
+    }
 }

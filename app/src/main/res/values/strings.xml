@@ -3,4 +3,5 @@
     <string name="nearby_information_system">Nearby Information System</string>
     <string name="local_service_connected">Service Connected</string>
     <string name="missingPermission">Missing Permissions</string>
+    <string name="nearbyconnection">NearbyConnection</string>
 </resources>
