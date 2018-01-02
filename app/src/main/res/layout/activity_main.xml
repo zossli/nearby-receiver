@@ -53,7 +53,7 @@
 
     <TextView
         android:id="@+id/txtTrainStatic"
-        android:layout_width="70dp"
+        android:layout_width="120dp"
         android:layout_height="20dp"
         android:layout_marginStart="16dp"
         android:layout_marginTop="16dp"
@@ -63,7 +63,7 @@
 
     <TextView
         android:id="@+id/txtDirectionStatic"
-        android:layout_width="70dp"
+        android:layout_width="120dp"
         android:layout_height="20dp"
         android:layout_marginStart="16dp"
         android:text="Richtung"
@@ -87,15 +87,35 @@
         app:layout_constraintStart_toEndOf="@+id/txtDirectionStatic"
         app:layout_constraintTop_toBottomOf="@+id/txtTrain" />
 
+    <TextView
+        android:id="@+id/txtnextStop"
+        android:layout_width="120dp"
+        android:layout_height="20dp"
+        android:layout_marginStart="8dp"
+        app:layout_constraintStart_toEndOf="@+id/txtNextStopstatic"
+        app:layout_constraintTop_toBottomOf="@+id/txtDirection" />
+
+    <TextView
+        android:id="@+id/txtNextStopstatic"
+        android:layout_width="120dp"
+        android:layout_height="20dp"
+        android:layout_marginStart="16dp"
+        android:text="Nächster Halt"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/txtDirectionStatic" />
+
     <Button
         android:id="@+id/btnRequestStop"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="16dp"
-        android:text="Button"
-        app:layout_constraintStart_toEndOf="@+id/txtTrain"
-        app:layout_constraintTop_toBottomOf="@+id/toolbar" />
+        android:layout_marginEnd="8dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="20dp"
+        android:text="Halt Verlangen"
+        android:visibility="gone"
+        app:layout_constraintEnd_toEndOf="@+id/txtnextStop"
+        app:layout_constraintStart_toStartOf="@+id/txtnextStop"
+        app:layout_constraintTop_toBottomOf="@+id/txtnextStop" />
 
 
 </android.support.constraint.ConstraintLayout>

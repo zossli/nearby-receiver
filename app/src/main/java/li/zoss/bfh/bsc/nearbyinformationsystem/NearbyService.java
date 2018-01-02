@@ -1,6 +1,5 @@
 package li.zoss.bfh.bsc.nearbyinformationsystem;
 
-import android.app.Activity;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -16,7 +15,6 @@ import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
-import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -25,7 +23,6 @@ import com.google.android.gms.nearby.connection.Payload;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.util.Date;
 import java.util.Set;
 import java.util.UUID;
 
@@ -40,11 +37,15 @@ public class NearbyService extends ConnectionService implements GoogleApiClient.
     private final String NAME = "Receiver " + UUID.randomUUID();
     private NotificationManager mNotificationManager;
     private String CHANNEL_ID_DEFAULT = "nearby_Information_System_Notification";
+    private String CHANNEL_ID_DELAY = "nearby_Information_System_Notification_DELAY";
+    private static final int NOTIFICIATION_ID_NEXT_STOP = 1;
+    private static final int NOTIFICIATION_ID_CURRENT_DELAY = 2;
+
     private NearbyBroadcastReceiver nearbyBroadcastReceiver;
 
 
     //Information to the current Train.
-    private String trainInfo, trainDirection, trainNextStop;
+    private String trainInfo, trainDirection, trainNextStop, currentDelay;
     private Boolean trainRequestNeeded;
 
     //View refresh
@@ -70,35 +71,54 @@ public class NearbyService extends ConnectionService implements GoogleApiClient.
             mNotificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
 
 
-            // The user-visible name of the channel.
-            CharSequence name = "Nächster Halt";
-            // The user-visible description of the channel.
-            String description = "Meldungen zum nächsten Halt.";
-            int importance = 0;
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                importance = NotificationManager.IMPORTANCE_HIGH;
-            }
-            NotificationChannel mChannel = null;
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                mChannel = new NotificationChannel(CHANNEL_ID_DEFAULT, name, importance);
+        // The user-visible name of the channel.
+        CharSequence name = "Nächster Halt";
+        // The user-visible description of the channel.
+        String description = "Meldungen zum nächsten Halt.";
+        int importance = 0;
+        importance = NotificationManager.IMPORTANCE_HIGH;
+        NotificationChannel mChannel = null;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            mChannel = new NotificationChannel(CHANNEL_ID_DEFAULT, name, importance);
+            // Configure the notification channel.
+            mChannel.setDescription(description);
+            mChannel.enableLights(true);
+            // Sets the notification light color for notifications posted to this
+            // channel, if the device supports this feature.
+            mChannel.setLightColor(Color.YELLOW);
+            mChannel.enableVibration(true);
+            mChannel.setVibrationPattern(new long[]{100, 200});
+            mNotificationManager.createNotificationChannel(mChannel);
+        }
 
-                // Configure the notification channel.
-                mChannel.setDescription(description);
-                mChannel.enableLights(true);
-                // Sets the notification light color for notifications posted to this
-                // channel, if the device supports this feature.
-                mChannel.setLightColor(Color.RED);
-                mChannel.enableVibration(true);
-                mChannel.setVibrationPattern(new long[]{100, 200});
-                mNotificationManager.createNotificationChannel(mChannel);
-            }
+        // The user-visible name of the channel.
+        name = "Verspätungsminuten";
+        // The user-visible description of the channel.
+        description = "Die aktuelle Verspätung";
+        importance = 0;
+        importance = NotificationManager.IMPORTANCE_HIGH;
+        NotificationChannel mChannelDelay = null;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            mChannelDelay = new NotificationChannel(CHANNEL_ID_DELAY, name, importance);
 
-             if(mState.equals(State.CONNECTED)){
-                 Log.i(TAG, "onStartCommand: already connected getting train info");
-                Set<Endpoint> endpoints = getConnectedEndpoints();
-                Endpoint endpoint = endpoints.iterator().next();
-                getTrainInfoFromService(endpoint);
-            }
+            // Configure the notification channel.
+            mChannelDelay.setDescription(description);
+            mChannelDelay.enableLights(true);
+            // Sets the notification light color for notifications posted to this
+            // channel, if the device supports this feature.
+            mChannelDelay.setLightColor(Color.RED);
+            mChannelDelay.enableVibration(true);
+            mChannelDelay.setVibrationPattern(new long[]{100,200,300,400,500,600});
+            mNotificationManager.createNotificationChannel(mChannelDelay);
+        }
+
+        if(mState.equals(State.CONNECTED)){
+            Log.i(TAG, "onStartCommand: already connected getting train info");
+            Set<Endpoint> endpoints = getConnectedEndpoints();
+            Endpoint endpoint = endpoints.iterator().next();
+            getTrainInfoFromService(endpoint);
+        }
+
         
         return super.onStartCommand(intent, flags, startId);
 
@@ -128,14 +148,23 @@ public class NearbyService extends ConnectionService implements GoogleApiClient.
         }
 
         NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        mNotificationManager.notify(NOTIFICIATION_ID_NEXT_STOP, mBuilder.build());
+    }
+    private void notificationDelay(String currentDelay) {
+        Intent contentIntent = new Intent(this, MainActivity.class);
+        PendingIntent resultPendingIntent = PendingIntent.getActivity(this,0,contentIntent,PendingIntent.FLAG_UPDATE_CURRENT);
+        NotificationCompat.Builder mBuilder =
+                new NotificationCompat.Builder(this, CHANNEL_ID_DELAY)
+                        .setSmallIcon(R.drawable.logoeinfach)
+                        .setLargeIcon(BitmapFactory.decodeResource(getResources(), R.drawable.logo_klein))
+                        .setContentTitle("Verspätungsmeldung")
+                        .setContentText(currentDelay+"min")
+                        .setDefaults(Notification.DEFAULT_ALL)
+                        .setVisibility(Notification.VISIBILITY_PUBLIC)
+                        .setContentIntent(resultPendingIntent);
 
-
-        // mNotificationId is a unique integer your app uses to identify the
-        // notification. For example, to cancel the notification, you can pass its ID
-        // number to NotificationManager.cancel().
-        int mNotificationId = new Date().hashCode();
-        Log.i(TAG, "notification: " + mNotificationId);
-        mNotificationManager.notify(mNotificationId, mBuilder.build());
+        NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        mNotificationManager.notify(NOTIFICIATION_ID_CURRENT_DELAY, mBuilder.build());
     }
 
 
@@ -151,21 +180,20 @@ public class NearbyService extends ConnectionService implements GoogleApiClient.
                         trainRequestNeeded = jsonObject.get("requestNeeded").toString().toLowerCase().equals("true");
                         trainNextStop = (String) jsonObject.get("station");
                         notification(trainNextStop, trainRequestNeeded, endpoint);
+                        sendViewRefresh(endpoint);
                         break;
                     case DELAY:
+                        currentDelay = jsonObject.getString("delay");
+                        notificationDelay(currentDelay);
                         break;
                     case INFO:
                         break;
                     case TRAIN_INFO:
                         trainInfo = jsonObject.getString("trainInfo");
-                        trainDirection = jsonObject.getString("direction");
-                        trainNextStop = jsonObject.getString("nextStop");
-                        Intent intent = new Intent();
-                        intent.putExtra("trainInfo", trainInfo);
-                        intent.putExtra("trainDirection", trainDirection);
-                        intent.putExtra("trainNextStop", trainNextStop);
-                        intent.setAction(MainActivity.INTENT_REFRESH_TRAIN_INFO);
-                        sendBroadcast(intent);
+                        trainDirection = jsonObject.getString("trainDirection");
+                        trainNextStop = jsonObject.getString("trainNextStop");
+                        trainRequestNeeded = jsonObject.getBoolean("trainNextStopRequestNeeded");
+                        sendViewRefresh(endpoint);
                         break;
                 }
 
@@ -174,6 +202,18 @@ public class NearbyService extends ConnectionService implements GoogleApiClient.
             }
         }
 
+    }
+
+    public void sendViewRefresh(Endpoint endpoint)
+    {
+        Intent intent = new Intent();
+        intent.putExtra("trainInfo", trainInfo);
+        intent.putExtra("trainDirection", trainDirection);
+        intent.putExtra("trainNextStop", trainNextStop);
+        intent.putExtra("trainNextStopRequestNeeded", trainRequestNeeded);
+        intent.putExtra("endpointId", endpoint.getId());
+        intent.setAction(MainActivity.INTENT_REFRESH_TRAIN_INFO);
+        sendBroadcast(intent);
     }
 
     @Override
