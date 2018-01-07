@@ -43,13 +43,22 @@
         app:srcCompat="@drawable/ic_nearby_white" />
 
     <ProgressBar
-        android:id="@+id/progressBar"
+        android:id="@+id/pgBarConnect"
         style="@style/Widget.AppCompat.ProgressBar"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
         android:visibility="gone"
         app:layout_constraintEnd_toEndOf="@+id/btnConnect"
         app:layout_constraintTop_toTopOf="@+id/btnConnect" />
+
+    <ProgressBar
+        android:id="@+id/pgBarSound"
+        style="@style/Widget.AppCompat.ProgressBar"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:visibility="gone"
+        app:layout_constraintEnd_toEndOf="@+id/btnSoundSwitch"
+        app:layout_constraintTop_toTopOf="@+id/btnSoundSwitch" />
 
     <TextView
         android:id="@+id/txtTrainStatic"
@@ -57,7 +66,7 @@
         android:layout_height="20dp"
         android:layout_marginStart="16dp"
         android:layout_marginTop="16dp"
-        android:text="Zug"
+        android:text="Zug:"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/toolbar" />
 
@@ -66,7 +75,7 @@
         android:layout_width="120dp"
         android:layout_height="20dp"
         android:layout_marginStart="16dp"
-        android:text="Richtung"
+        android:text="Richtung:"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/txtTrainStatic" />
 
@@ -100,22 +109,95 @@
         android:layout_width="120dp"
         android:layout_height="20dp"
         android:layout_marginStart="16dp"
-        android:text="Nächster Halt"
+        android:text="Nächster Halt:"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/txtDirectionStatic" />
 
     <Button
         android:id="@+id/btnRequestStop"
-        android:layout_width="wrap_content"
+        android:layout_width="103dp"
         android:layout_height="wrap_content"
         android:layout_marginEnd="8dp"
         android:layout_marginStart="8dp"
-        android:layout_marginTop="20dp"
+        android:layout_marginTop="8dp"
         android:text="Halt Verlangen"
         android:visibility="gone"
-        app:layout_constraintEnd_toEndOf="@+id/txtnextStop"
-        app:layout_constraintStart_toStartOf="@+id/txtnextStop"
+        app:layout_constraintBottom_toBottomOf="@+id/txtnextStop"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/txtDirection"
+        app:layout_constraintTop_toBottomOf="@+id/toolbar" />
+
+    <TextView
+        android:id="@+id/txtStationInfoStatic"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="8dp"
+        android:text="Bahnhofsinfo:"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/txtDelayStatic" />
+
+    <TextView
+        android:id="@+id/txtStationInfo"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="8dp"
+        android:layout_marginStart="16dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/txtStationInfoStatic" />
+
+    <TextView
+        android:id="@+id/txtSpecialCoachesStatic"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="8dp"
+        android:text="Informationen zu diesem Wagen:"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/txtStationInfo" />
+
+    <TextView
+        android:id="@+id/txtSpecialCoaches"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="8dp"
+        android:layout_marginStart="16dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/txtSpecialCoachesStatic" />
+
+    <TextView
+        android:id="@+id/txtDelayStatic"
+        android:layout_width="120dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="8dp"
+        android:text="Verspätung:"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/txtNextStopstatic" />
+
+    <TextView
+        android:id="@+id/txtDelay"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:text="keine Verspätung"
+        app:layout_constraintStart_toEndOf="@+id/txtDelayStatic"
         app:layout_constraintTop_toBottomOf="@+id/txtnextStop" />
+
+    <ImageButton
+        android:id="@+id/btnSoundSwitch"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_marginEnd="8dp"
+        android:background="#0000"
+        android:scaleType="fitCenter"
+        android:visibility="invisible"
+        app:layout_constraintEnd_toStartOf="@+id/btnConnect"
+        app:layout_constraintTop_toTopOf="@+id/btnConnect"
+        app:srcCompat="@drawable/ic_volume_off" />
 
 
 </android.support.constraint.ConstraintLayout>

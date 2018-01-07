@@ -14,6 +14,7 @@ import org.json.JSONObject;
 public class NearbyBroadcastReceiver extends BroadcastReceiver {
 
     public static final String INTENT_ACTION_REQUEST_STOP = "li.zoss.bfh.bsc.nearbyinfomrationsystem.requeststop";
+    public static final String INTENT_ACTION_SET_SOUND = "li.zoss.bfh.bsc.nearbyinfomrationsystem.setsound";
     private final NearbyService mNearbyServices;
     private String TAG = "NearbyBroadcastReceiver";
 
@@ -37,5 +38,17 @@ public class NearbyBroadcastReceiver extends BroadcastReceiver {
                 e.printStackTrace();
             }
         }
+        if (intent.getAction().equals(INTENT_ACTION_SET_SOUND)) {
+            Boolean willPlaySound = intent.getBooleanExtra("willPlaySound",false);
+            try {
+                JSONObject jsonObject = new JSONObject();
+                jsonObject.put("Type", NotType.WITH_SOUND_REQUEST);
+                jsonObject.put("willPlaySound", willPlaySound);
+                mNearbyServices.send(Payload.fromBytes(jsonObject.toString().getBytes()));
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
+
     }
 }

@@ -8,21 +8,32 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.BitmapFactory;
-import android.graphics.Color;
+import android.media.AudioDeviceInfo;
+import android.media.AudioManager;
+import android.media.MediaPlayer;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.support.v4.app.NotificationCompat;
+import android.support.v4.util.SimpleArrayMap;
 import android.util.Log;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.nearby.connection.Payload;
 
+import org.apache.commons.io.IOUtils;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.Set;
 import java.util.UUID;
 
@@ -36,106 +47,53 @@ public class NearbyService extends ConnectionService implements GoogleApiClient.
     private static final String SERVICE_ID = "li.zoss.bfh.bsc";
     private final String NAME = "Receiver " + UUID.randomUUID();
     private NotificationManager mNotificationManager;
-    private String CHANNEL_ID_DEFAULT = "nearby_Information_System_Notification";
-    private String CHANNEL_ID_DELAY = "nearby_Information_System_Notification_DELAY";
+
+    private static final String CHANNEL_ID_DEFAULT = "nearby_Information_System_Notification";
+    private static final String CHANNEL_ID_DELAY = "nearby_Information_System_Notification_DELAY";
+    private static final String CHANNEL_ID_INFO = "nearby_Information_System_Notification_INFO";
+
     private static final int NOTIFICIATION_ID_NEXT_STOP = 1;
     private static final int NOTIFICIATION_ID_CURRENT_DELAY = 2;
 
-    private NearbyBroadcastReceiver nearbyBroadcastReceiver;
+    private SimpleArrayMap<Long, Payload> incomingPayloads = new SimpleArrayMap<>();
 
+    private NearbyBroadcastReceiver nearbyBroadcastReceiver;
+    private boolean playSound = false;
 
     //Information to the current Train.
-    private String trainInfo, trainDirection, trainNextStop, currentDelay;
+    private String trainInfo, trainDirection, trainNextStop, trainCoachInfo, currentDelay, stationInfo;
     private Boolean trainRequestNeeded;
 
-    //View refresh
-    private MainActivity viewer;
+    private long[] mVibrationOne = new long[]{100, 200, 300, 400, 500, 600};
+    private long[] mVibrationTwo = new long[]{100, 200};
+    private AudioManager myAudioManager;
 
-    /**
-     * The default Service onStartCommand
-     *
-     * @param intent
-     * @param flags
-     * @param startId
-     * @return
-     */
+
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        Log.i(TAG, "onStartCommand: state is: "+mState );
-            if (nearbyBroadcastReceiver == null)
-                nearbyBroadcastReceiver = new NearbyBroadcastReceiver(this);
-            IntentFilter intentFilter = new IntentFilter(NearbyBroadcastReceiver.INTENT_ACTION_REQUEST_STOP);
-            registerReceiver(nearbyBroadcastReceiver, intentFilter);
+        Log.i(TAG, "onStartCommand: state is: " + mState);
 
+        if (nearbyBroadcastReceiver == null)
+            nearbyBroadcastReceiver = new NearbyBroadcastReceiver(this);
 
-            mNotificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+        IntentFilter intentFilter = new IntentFilter(NearbyBroadcastReceiver.INTENT_ACTION_REQUEST_STOP);
+        registerReceiver(nearbyBroadcastReceiver, intentFilter);
 
+        intentFilter = new IntentFilter(NearbyBroadcastReceiver.INTENT_ACTION_SET_SOUND);
+        registerReceiver(nearbyBroadcastReceiver, intentFilter);
 
-        // The user-visible name of the channel.
-        CharSequence name = "Nächster Halt";
-        // The user-visible description of the channel.
-        String description = "Meldungen zum nächsten Halt.";
-        int importance = 0;
-        importance = NotificationManager.IMPORTANCE_HIGH;
-        NotificationChannel mChannel = null;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            mChannel = new NotificationChannel(CHANNEL_ID_DEFAULT, name, importance);
-            // Configure the notification channel.
-            mChannel.setDescription(description);
-            mChannel.enableLights(true);
-            // Sets the notification light color for notifications posted to this
-            // channel, if the device supports this feature.
-            mChannel.setLightColor(Color.YELLOW);
-            mChannel.enableVibration(true);
-            mChannel.setVibrationPattern(new long[]{100, 200});
-            mNotificationManager.createNotificationChannel(mChannel);
-        }
+        createNotificationChannels();
 
-        // The user-visible name of the channel.
-        name = "Verspätungsminuten";
-        // The user-visible description of the channel.
-        description = "Die aktuelle Verspätung";
-        importance = 0;
-        importance = NotificationManager.IMPORTANCE_HIGH;
-        NotificationChannel mChannelDelay = null;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            mChannelDelay = new NotificationChannel(CHANNEL_ID_DELAY, name, importance);
+        checkIfAlreadyConnected();
 
-            // Configure the notification channel.
-            mChannelDelay.setDescription(description);
-            mChannelDelay.enableLights(true);
-            // Sets the notification light color for notifications posted to this
-            // channel, if the device supports this feature.
-            mChannelDelay.setLightColor(Color.RED);
-            mChannelDelay.enableVibration(true);
-            mChannelDelay.setVibrationPattern(new long[]{100,200,300,400,500,600});
-            mNotificationManager.createNotificationChannel(mChannelDelay);
-        }
-
-        if(mState.equals(State.CONNECTED)){
-            Log.i(TAG, "onStartCommand: already connected getting train info");
-            Set<Endpoint> endpoints = getConnectedEndpoints();
-            Endpoint endpoint = endpoints.iterator().next();
-            getTrainInfoFromService(endpoint);
-        }
-
-        
         return super.onStartCommand(intent, flags, startId);
 
     }
 
-    private void notification(String station, Boolean requestNeeded, Endpoint endpoint) {
-        Intent contentIntent = new Intent(this, MainActivity.class);
-        PendingIntent resultPendingIntent = PendingIntent.getActivity(this,0,contentIntent,PendingIntent.FLAG_UPDATE_CURRENT);
-        NotificationCompat.Builder mBuilder =
-                new NotificationCompat.Builder(this, CHANNEL_ID_DEFAULT)
-                        .setSmallIcon(R.drawable.logoeinfach)
-                        .setLargeIcon(BitmapFactory.decodeResource(getResources(), R.drawable.logo_klein))
-                        .setContentTitle("Nächster Halt")
-                        .setContentText(station)
-                        .setDefaults(Notification.DEFAULT_ALL)
-                        .setVisibility(Notification.VISIBILITY_PUBLIC)
-                        .setContentIntent(resultPendingIntent);
+
+    private void notificationDefault(String station, Boolean requestNeeded, String stationInfo, Endpoint endpoint) {
+
+        NotificationCompat.Builder mBuilder = createNotiBuilder("Nächster Halt", CHANNEL_ID_DEFAULT, station);
 
         if (requestNeeded) {
             Intent intent = new Intent();
@@ -146,72 +104,174 @@ public class NearbyService extends ConnectionService implements GoogleApiClient.
             NotificationCompat.Action action = new NotificationCompat.Action(R.drawable.logoeinfach, "Halt verlangen", pendingIntent);
             mBuilder.addAction(action);
         }
+        if (!stationInfo.isEmpty()) {
+            mBuilder.setStyle(new NotificationCompat.BigTextStyle()
+                    .bigText(station + "\n" + stationInfo)
+            );
+        }
+        NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        mNotificationManager.notify(NOTIFICIATION_ID_NEXT_STOP, mBuilder.build());
+    }
+
+    private void notificationInfo(String info) {
+
+        NotificationCompat.Builder mBuilder = createNotiBuilder("Zugsinformation", CHANNEL_ID_INFO, info);
+        mBuilder.setStyle(new NotificationCompat.BigTextStyle().bigText(info));
 
         NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         mNotificationManager.notify(NOTIFICIATION_ID_NEXT_STOP, mBuilder.build());
     }
-    private void notificationDelay(String currentDelay) {
-        Intent contentIntent = new Intent(this, MainActivity.class);
-        PendingIntent resultPendingIntent = PendingIntent.getActivity(this,0,contentIntent,PendingIntent.FLAG_UPDATE_CURRENT);
-        NotificationCompat.Builder mBuilder =
-                new NotificationCompat.Builder(this, CHANNEL_ID_DELAY)
-                        .setSmallIcon(R.drawable.logoeinfach)
-                        .setLargeIcon(BitmapFactory.decodeResource(getResources(), R.drawable.logo_klein))
-                        .setContentTitle("Verspätungsmeldung")
-                        .setContentText(currentDelay+"min")
-                        .setDefaults(Notification.DEFAULT_ALL)
-                        .setVisibility(Notification.VISIBILITY_PUBLIC)
-                        .setContentIntent(resultPendingIntent);
 
+    private void notificationDelay(String currentDelay) {
+        NotificationCompat.Builder mBuilder = createNotiBuilder("Verspätungsmeldung", CHANNEL_ID_DELAY, currentDelay);
         NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         mNotificationManager.notify(NOTIFICIATION_ID_CURRENT_DELAY, mBuilder.build());
     }
 
-
     @Override
     protected void onReceive(Endpoint endpoint, Payload payload) {
-        super.onReceive(endpoint, payload);
         if (payload.getType() == Payload.Type.BYTES) {
             try {
                 JSONObject jsonObject = new JSONObject(new String(payload.asBytes()));
                 Log.i(TAG, "onReceive: " + jsonObject);
                 switch (NotType.valueOf((jsonObject.getString("Type")))) {
                     case NEXT_STOP:
-                        trainRequestNeeded = jsonObject.get("requestNeeded").toString().toLowerCase().equals("true");
-                        trainNextStop = (String) jsonObject.get("station");
-                        notification(trainNextStop, trainRequestNeeded, endpoint);
+                        trainRequestNeeded = jsonObject.get("trainNextStopRequestNeeded").toString().toLowerCase().equals("true");
+                        trainNextStop = jsonObject.getString("trainNextStop");
+                        stationInfo = jsonObject.getString("trainNextStationInfo");
+                        notificationDefault(trainNextStop, trainRequestNeeded, stationInfo, endpoint);
                         sendViewRefresh(endpoint);
                         break;
+                    case REQUEST_STOP:
+                        break;
                     case DELAY:
-                        currentDelay = jsonObject.getString("delay");
+                        currentDelay = jsonObject.getString("trainDelay");
                         notificationDelay(currentDelay);
+                        sendViewRefresh(endpoint);
                         break;
                     case INFO:
+                        trainCoachInfo = jsonObject.getString("trainSpecialCoachInfo");
+                        notificationInfo(trainCoachInfo);
+                        sendViewRefresh(endpoint);
+                        break;
+                    case GET_TRAIN:
                         break;
                     case TRAIN_INFO:
                         trainInfo = jsonObject.getString("trainInfo");
                         trainDirection = jsonObject.getString("trainDirection");
                         trainNextStop = jsonObject.getString("trainNextStop");
+                        stationInfo = jsonObject.getString("trainNextStationInfo");
                         trainRequestNeeded = jsonObject.getBoolean("trainNextStopRequestNeeded");
+                        trainCoachInfo = jsonObject.getString("trainSpecialCoachInfo");
+                        currentDelay = jsonObject.getString("trainCurrentDelay");
                         sendViewRefresh(endpoint);
+                        break;
+                    case CONNECTED_TO_SYSTEM:
+                        break;
+                    case WITH_SOUND_REQUEST:
+                        break;
+                    case WITH_SOUND_RESPONSE:
+                        playSound = jsonObject.getBoolean("willPlaySound");
+                        sendSoundIntent();
                         break;
                 }
 
             } catch (JSONException e) {
                 e.printStackTrace();
             }
-        }
+        } else if (payload.getType() == Payload.Type.STREAM) {
+            File file = null;
+            try {
+                byte[] buffer;
+                InputStream instream = payload.asStream().asInputStream();
+                file = new File(getCacheDir().getParent(), "test.mp3");
+                OutputStream outputStream = new FileOutputStream(file);
+                IOUtils.copy(instream, outputStream);
+                outputStream.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
 
+            try {
+                if (myAudioManager == null)
+                    myAudioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
+                Boolean canPlay = false;
+                ArrayList<Integer> allowedDevices = new ArrayList<>();
+                allowedDevices.add(AudioDeviceInfo.TYPE_BLUETOOTH_A2DP);
+                allowedDevices.add(AudioDeviceInfo.TYPE_BLUETOOTH_SCO);
+                allowedDevices.add(AudioDeviceInfo.TYPE_WIRED_HEADPHONES);
+                allowedDevices.add(AudioDeviceInfo.TYPE_WIRED_HEADSET);
+                AudioDeviceInfo[] devices = myAudioManager.getDevices(AudioManager.GET_DEVICES_OUTPUTS);
+                for (int i = 0; devices.length > i; i++) {
+                    Log.i(TAG, "check outputdevices " + devices[i].getType());
+                    for (int device : allowedDevices) {
+                        canPlay = device == devices[i].getType();
+                        if (canPlay)
+                            break;
+                    }
+                    if (canPlay)
+                        break;
+                }
+                Log.i(TAG, "can play = "+canPlay);
+                if (canPlay) {
+                    String[] dirlist = getCacheDir().list();
+                    for(int i = 0; dirlist.length>i; i++){
+                        Log.i(TAG, "Dirlist"+dirlist[i]);
+                    }
+                    MediaPlayer mediaPlayer = new MediaPlayer();
+                    mediaPlayer.setDataSource(this, Uri.fromFile(file));
+                    mediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+                        @Override
+                        public void onPrepared(MediaPlayer mp) {
+                            mp.start();
+                        }
+                    });
+                    mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+                        @Override
+                        public void onCompletion(MediaPlayer mp) {
+                            mp.stop();
+                            mp.reset();
+                            mp.release();
+                        }
+                    });
+                    mediaPlayer.prepareAsync();
+                } else {
+                    playSound = false;
+                    sendSoundIntent();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
-    public void sendViewRefresh(Endpoint endpoint)
-    {
+
+    private void sendSoundIntent() {
+        Intent intent = new Intent();
+        intent.putExtra("willPlaySound", playSound);
+        intent.setAction(MainActivity.INTENT_PLAY_SOUND);
+        sendBroadcast(intent);
+    }
+
+    public static File stream2file(InputStream in) throws IOException {
+        final File tempFile = File.createTempFile("stream2file", ".tmp");
+        tempFile.deleteOnExit();
+        try (FileOutputStream out = new FileOutputStream(tempFile)) {
+            IOUtils.copy(in, out);
+        }
+        return tempFile;
+    }
+
+    public void sendViewRefresh(Endpoint endpoint) {
         Intent intent = new Intent();
         intent.putExtra("trainInfo", trainInfo);
         intent.putExtra("trainDirection", trainDirection);
         intent.putExtra("trainNextStop", trainNextStop);
         intent.putExtra("trainNextStopRequestNeeded", trainRequestNeeded);
         intent.putExtra("endpointId", endpoint.getId());
+        intent.putExtra("trainNextStationInfo", stationInfo);
+        intent.putExtra("trainCurrentDelay", currentDelay);
+        intent.putExtra("trainSpecialCoachInfo", trainCoachInfo);
         intent.setAction(MainActivity.INTENT_REFRESH_TRAIN_INFO);
         sendBroadcast(intent);
     }
@@ -236,18 +296,18 @@ public class NearbyService extends ConnectionService implements GoogleApiClient.
         super.onEndpointConnected(endpoint);
         getTrainInfoFromService(endpoint);
         setState(State.CONNECTED);
-        Intent intent = new Intent();
-        intent.putExtra("Type", NotType.CONNECTED_TO_SYSTEM);
-        intent.setAction(MainActivity.INTENT_REFRESH_TRAIN_CONNECTED);
-        sendBroadcast(intent);
 
     }
 
-
     private void getTrainInfoFromService(Endpoint endpoint) {
+        getTrainInfoFromService(endpoint, false);
+    }
+
+    private void getTrainInfoFromService(Endpoint endpoint, Boolean coachInfoAlreadyReceived) {
         JSONObject gTrain = new JSONObject();
         try {
             gTrain.put("Type", NotType.GET_TRAIN);
+            gTrain.put("coachInfoAlreadyReceived", coachInfoAlreadyReceived);
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -298,7 +358,7 @@ public class NearbyService extends ConnectionService implements GoogleApiClient.
         DISCOVERING,
         CONNECTED,
         KILLED,
-        UNKNOWN
+        STOPPED, UNKNOWN
     }
 
     private void setState(State state) {
@@ -310,7 +370,13 @@ public class NearbyService extends ConnectionService implements GoogleApiClient.
                 if (previousState.equals(State.UNKNOWN)) {
                     if (!isDiscovering()) {
                         startDiscovering();
+
                         Log.i(TAG, "setState: Discovering");
+                        Intent intent = new Intent();
+                        intent.putExtra("Type", NotType.CONNECTED_TO_SYSTEM);
+                        intent.putExtra("isConnedted", false);
+                        intent.setAction(MainActivity.INTENT_REFRESH_TRAIN_CONNECTED);
+                        sendBroadcast(intent);
                     }
                 }
                 break;
@@ -318,10 +384,19 @@ public class NearbyService extends ConnectionService implements GoogleApiClient.
                 if (previousState.equals(State.DISCOVERING)) {
                     stopDiscovering();
                     Log.i(TAG, "setState: Connected");
+                    Intent intent = new Intent();
+                    intent.putExtra("Type", NotType.CONNECTED_TO_SYSTEM);
+                    intent.putExtra("isConnedted", true);
+                    intent.setAction(MainActivity.INTENT_REFRESH_TRAIN_CONNECTED);
+                    sendBroadcast(intent);
                 }
                 break;
+            case STOPPED:
+                setState(State.STOPPED);
+                Log.i(TAG, "setState: Stopped.");
+                break;
             case UNKNOWN:
-                if (!previousState.equals(State.KILLED)) {
+                if (!previousState.equals(State.KILLED) || !previousState.equals(State.STOPPED)) {
                     setState(State.DISCOVERING);
                     Log.i(TAG, "setState: Unknown from connected or discovering. so try to discover again.");
                 }
@@ -332,4 +407,79 @@ public class NearbyService extends ConnectionService implements GoogleApiClient.
         }
     }
 
+
+    private void createNotificationChannels() {
+        mNotificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+        // The user-visible name of the channel.
+        CharSequence name = "Nächster Halt";
+        // The user-visible description of the channel.
+        String description = "Meldungen zum nächsten Halt.";
+        int importance = 0;
+        importance = NotificationManager.IMPORTANCE_HIGH;
+        NotificationChannel mChannel = null;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            mChannel = new NotificationChannel(CHANNEL_ID_DEFAULT, name, importance);
+            mChannel.setDescription(description);
+            mChannel.enableLights(true);
+            mChannel.setSound(null, null);
+            mChannel.enableVibration(true);
+            mChannel.setVibrationPattern(mVibrationTwo);
+            mNotificationManager.createNotificationChannel(mChannel);
+        }
+
+        // The user-visible name of the channel.
+        name = "Verspätungsminuten";
+        // The user-visible description of the channel.
+        description = "Die aktuelle Verspätung";
+        importance = NotificationManager.IMPORTANCE_HIGH;
+        NotificationChannel mChannelDelay = null;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            mChannelDelay = new NotificationChannel(CHANNEL_ID_DELAY, name, importance);
+            mChannelDelay.setDescription(description);
+            mChannelDelay.enableVibration(true);
+            mChannelDelay.setSound(null, null);
+            mChannelDelay.setVibrationPattern(mVibrationOne);
+            mNotificationManager.createNotificationChannel(mChannelDelay);
+        }
+
+        // The user-visible name of the channel.
+        name = "Informationen";
+        // The user-visible description of the channel.
+        description = "Allgemeine Informationen";
+        importance = NotificationManager.IMPORTANCE_HIGH;
+        NotificationChannel mChannelInfo = null;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            mChannelInfo = new NotificationChannel(CHANNEL_ID_INFO, name, importance);
+            mChannelInfo.setDescription(description);
+            mChannelInfo.enableVibration(true);
+            mChannelInfo.setSound(null, null);
+            mChannelInfo.setVibrationPattern(mVibrationTwo);
+            mNotificationManager.createNotificationChannel(mChannelInfo);
+        }
+    }
+
+    private void checkIfAlreadyConnected() {
+        if (mState.equals(State.CONNECTED)) {
+            Log.i(TAG, "onStartCommand: already connected getting train info");
+            Set<Endpoint> endpoints = getConnectedEndpoints();
+            Endpoint endpoint = endpoints.iterator().next();
+            getTrainInfoFromService(endpoint, true);
+        }
+    }
+
+    private NotificationCompat.Builder createNotiBuilder(String title, String channelId, String content) {
+        Intent contentIntent = new Intent(this, MainActivity.class);
+        PendingIntent resultPendingIntent = PendingIntent.getActivity(this, 0, contentIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+        NotificationCompat.Builder mBuilder =
+                new NotificationCompat.Builder(this, channelId)
+                        .setSmallIcon(R.drawable.logoeinfach)
+                        .setLargeIcon(BitmapFactory.decodeResource(getResources(), R.drawable.logo_klein))
+                        .setContentTitle(title)
+                        .setContentText(content)
+                        .setDefaults(Notification.DEFAULT_VIBRATE)
+                        .setVisibility(Notification.VISIBILITY_PUBLIC)
+                        .setContentIntent(resultPendingIntent)
+                        .setAutoCancel(true);
+        return mBuilder;
+    }
 }
