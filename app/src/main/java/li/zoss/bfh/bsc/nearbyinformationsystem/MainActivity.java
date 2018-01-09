@@ -203,10 +203,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             pgBarConnect.setVisibility(View.GONE);
             btnConnectToNearbySystem.setImageResource(R.drawable.ic_nearby_color);
             btnSoundSwitch.setVisibility(View.VISIBLE);
+            btnSoundSwitch.setImageResource(R.drawable.ic_volume_off);
         } else {
             pgBarConnect.setVisibility(View.VISIBLE);
             btnConnectToNearbySystem.setImageResource(R.drawable.ic_nearby_white);
             btnSoundSwitch.setVisibility(View.GONE);
+            pgBarSound.setVisibility(View.GONE);
         }
     }
     private void currentSoundState(Boolean willPlay) {

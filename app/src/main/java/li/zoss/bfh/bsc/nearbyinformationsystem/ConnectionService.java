@@ -107,7 +107,7 @@ public abstract class ConnectionService extends Service implements GoogleApiClie
         } else if (mGoogleApiClient.isConnected())
             mGoogleApiClient.connect();
 
-        return Service.START_STICKY;
+        return START_STICKY;
     }
 
     /**

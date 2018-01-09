@@ -212,12 +212,7 @@ public class NearbyService extends ConnectionService implements GoogleApiClient.
                     if (canPlay)
                         break;
                 }
-                Log.i(TAG, "can play = "+canPlay);
                 if (canPlay) {
-                    String[] dirlist = getCacheDir().list();
-                    for(int i = 0; dirlist.length>i; i++){
-                        Log.i(TAG, "Dirlist"+dirlist[i]);
-                    }
                     MediaPlayer mediaPlayer = new MediaPlayer();
                     mediaPlayer.setDataSource(this, Uri.fromFile(file));
                     mediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
@@ -229,6 +224,7 @@ public class NearbyService extends ConnectionService implements GoogleApiClient.
                     mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
                         @Override
                         public void onCompletion(MediaPlayer mp) {
+                            Log.i(TAG, "onCompletion: Player will be deleted");
                             mp.stop();
                             mp.reset();
                             mp.release();
