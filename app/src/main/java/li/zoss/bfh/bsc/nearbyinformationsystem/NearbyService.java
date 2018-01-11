@@ -21,7 +21,6 @@ import android.support.v4.util.SimpleArrayMap;
 import android.util.Log;
 
 import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.nearby.connection.Payload;
 
 import org.apache.commons.io.IOUtils;
@@ -40,7 +39,7 @@ import java.util.UUID;
 /**
  * The Nearby Service is used for implementing the specific functions for the nearby connections.
  */
-public class NearbyService extends ConnectionService implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
+public class NearbyService extends ConnectionService {
     private State mState = State.UNKNOWN;
     private String TAG = "NearbyService";
 
@@ -182,7 +181,6 @@ public class NearbyService extends ConnectionService implements GoogleApiClient.
         } else if (payload.getType() == Payload.Type.STREAM) {
             File file = null;
             try {
-                byte[] buffer;
                 InputStream instream = payload.asStream().asInputStream();
                 file = new File(getCacheDir().getParent(), "test.mp3");
                 OutputStream outputStream = new FileOutputStream(file);
@@ -203,7 +201,6 @@ public class NearbyService extends ConnectionService implements GoogleApiClient.
                 allowedDevices.add(AudioDeviceInfo.TYPE_WIRED_HEADSET);
                 AudioDeviceInfo[] devices = myAudioManager.getDevices(AudioManager.GET_DEVICES_OUTPUTS);
                 for (int i = 0; devices.length > i; i++) {
-                    Log.i(TAG, "check outputdevices " + devices[i].getType());
                     for (int device : allowedDevices) {
                         canPlay = device == devices[i].getType();
                         if (canPlay)
@@ -234,6 +231,8 @@ public class NearbyService extends ConnectionService implements GoogleApiClient.
                 } else {
                     playSound = false;
                     sendSoundIntent();
+                    // TODO: Send not only to UI - but also to Sender Device. Fewer Bandwith usage...
+
                 }
             } catch (IOException e) {
                 e.printStackTrace();

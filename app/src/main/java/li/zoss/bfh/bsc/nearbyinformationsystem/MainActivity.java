@@ -1,18 +1,17 @@
 package li.zoss.bfh.bsc.nearbyinformationsystem;
 
 import android.Manifest;
-import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
+import android.os.Bundle;
 import android.support.annotation.CallSuper;
 import android.support.annotation.NonNull;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -20,8 +19,6 @@ import android.widget.ImageButton;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
-
-import java.io.BufferedOutputStream;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
     public static final String INTENT_REFRESH_TRAIN_INFO = "li.zoss.bfh.bsc.nearbyinformationsystem.refreshTrainInfoView";
