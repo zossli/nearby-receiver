@@ -134,7 +134,7 @@ public class NearbyService extends ConnectionService {
                 JSONObject jsonObject = new JSONObject(new String(payload.asBytes()));
                 Log.i(TAG, "onReceive: " + jsonObject);
                 switch (NotType.valueOf((jsonObject.getString("Type")))) {
-                    case NEXT_STOP:
+                    case PUBLISH_NEXT_STOP:
                         trainRequestNeeded = jsonObject.get("trainNextStopRequestNeeded").toString().toLowerCase().equals("true");
                         trainNextStop = jsonObject.getString("trainNextStop");
                         stationInfo = jsonObject.getString("trainNextStationInfo");
@@ -143,19 +143,19 @@ public class NearbyService extends ConnectionService {
                         break;
                     case REQUEST_STOP:
                         break;
-                    case DELAY:
+                    case PUBLISH_DELAY:
                         currentDelay = jsonObject.getString("trainDelay");
                         notificationDelay(currentDelay);
                         sendViewRefresh(endpoint);
                         break;
-                    case INFO:
+                    case PUBLISH_COACH_INFO:
                         trainCoachInfo = jsonObject.getString("trainSpecialCoachInfo");
                         notificationInfo(trainCoachInfo);
                         sendViewRefresh(endpoint);
                         break;
-                    case GET_TRAIN:
+                    case REQUEST_TRAIN_INFO:
                         break;
-                    case TRAIN_INFO:
+                    case RESPONSE_TRAIN_INFO:
                         trainInfo = jsonObject.getString("trainInfo");
                         trainDirection = jsonObject.getString("trainDirection");
                         trainNextStop = jsonObject.getString("trainNextStop");
@@ -165,11 +165,9 @@ public class NearbyService extends ConnectionService {
                         currentDelay = jsonObject.getString("trainCurrentDelay");
                         sendViewRefresh(endpoint);
                         break;
-                    case CONNECTED_TO_SYSTEM:
+                    case REQUEST_WITH_SOUND:
                         break;
-                    case WITH_SOUND_REQUEST:
-                        break;
-                    case WITH_SOUND_RESPONSE:
+                    case RESPONSE_WITH_SOUND:
                         playSound = jsonObject.getBoolean("willPlaySound");
                         sendSoundIntent();
                         break;
@@ -301,7 +299,7 @@ public class NearbyService extends ConnectionService {
     private void getTrainInfoFromService(Endpoint endpoint, Boolean coachInfoAlreadyReceived) {
         JSONObject gTrain = new JSONObject();
         try {
-            gTrain.put("Type", NotType.GET_TRAIN);
+            gTrain.put("Type", NotType.REQUEST_TRAIN_INFO);
             gTrain.put("coachInfoAlreadyReceived", coachInfoAlreadyReceived);
         } catch (JSONException e) {
             e.printStackTrace();
@@ -368,7 +366,6 @@ public class NearbyService extends ConnectionService {
 
                         Log.i(TAG, "setState: Discovering");
                         Intent intent = new Intent();
-                        intent.putExtra("Type", NotType.CONNECTED_TO_SYSTEM);
                         intent.putExtra("isConnedted", false);
                         intent.setAction(MainActivity.INTENT_REFRESH_TRAIN_CONNECTED);
                         sendBroadcast(intent);
@@ -380,7 +377,6 @@ public class NearbyService extends ConnectionService {
                     stopDiscovering();
                     Log.i(TAG, "setState: Connected");
                     Intent intent = new Intent();
-                    intent.putExtra("Type", NotType.CONNECTED_TO_SYSTEM);
                     intent.putExtra("isConnedted", true);
                     intent.setAction(MainActivity.INTENT_REFRESH_TRAIN_CONNECTED);
                     sendBroadcast(intent);

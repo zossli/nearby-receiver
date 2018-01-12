@@ -41,7 +41,7 @@ public class NearbyBroadcastReceiver extends BroadcastReceiver {
             Boolean willPlaySound = intent.getBooleanExtra("willPlaySound",false);
             try {
                 JSONObject jsonObject = new JSONObject();
-                jsonObject.put("Type", NotType.WITH_SOUND_REQUEST);
+                jsonObject.put("Type", NotType.REQUEST_WITH_SOUND);
                 jsonObject.put("willPlaySound", willPlaySound);
                 mNearbyServices.send(Payload.fromBytes(jsonObject.toString().getBytes()));
             } catch (JSONException e) {

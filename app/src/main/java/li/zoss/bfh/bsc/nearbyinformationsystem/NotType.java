@@ -1,13 +1,12 @@
 package li.zoss.bfh.bsc.nearbyinformationsystem;
 
 enum NotType {
-    NEXT_STOP,
+    PUBLISH_NEXT_STOP,
+    PUBLISH_DELAY,
+    PUBLISH_COACH_INFO,
     REQUEST_STOP,
-    DELAY,
-    INFO,
-    GET_TRAIN,
-    TRAIN_INFO,
-    CONNECTED_TO_SYSTEM,
-    WITH_SOUND_REQUEST,
-    WITH_SOUND_RESPONSE
+    REQUEST_TRAIN_INFO,
+    RESPONSE_TRAIN_INFO,
+    REQUEST_WITH_SOUND,
+    RESPONSE_WITH_SOUND
 }
