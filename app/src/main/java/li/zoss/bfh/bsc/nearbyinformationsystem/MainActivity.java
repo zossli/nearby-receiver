@@ -25,11 +25,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public static final String INTENT_REFRESH_TRAIN_CONNECTED = "li.zoss.bfh.bsc.nearbyinformationsystem.isConnectedToTrain";
     public static final String INTENT_PLAY_SOUND = "li.zoss.bfh.bsc.nearbyinformationsystem.playSound";
 
-    private NearbyService mBoundService;
-    private boolean mIsBound;
-    private Context mContext;
-    private ServiceConnection mConnection;
-
     private String TAG = "MainActivity";
 
     /**
@@ -50,11 +45,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private Intent intentService;
     private ImageButton btnConnectToNearbySystem, btnSoundSwitch;
     private Button btnRequestStop;
-    private TextView txtTrainInfo, txtTrainDirection, txtNextstop, txtStationInfo, txtSpecialCoachesInfo, txtDelay;
+    private TextView txtTrainInfo, txtTrainDirection, txtNextstop, txtStationNextDep,txtStationInfo, txtSpecialCoachesInfo, txtDelay;
     private BroadcastReceiver mBroadcastReceiver;
     private ProgressBar pgBarConnect, pgBarSound;
     private boolean startWasRequested = false;
-    private String mtrainInfo, mtrainDirection, mtrainNextStop, mspecialCoachesInfo, mConnectedEndpoint, mdelay, mstationInfo;
+    private String mtrainInfo, mtrainDirection, mtrainNextStop, mNextDep, mspecialCoachesInfo, mConnectedEndpoint, mdelay, mstationInfo;
     private Boolean mtrainNextStopRequestNeeded;
     private boolean playSound = false;
 
@@ -63,7 +58,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        mContext = this.getBaseContext();
 
         intentService = new Intent(this, NearbyService.class);
 
@@ -84,6 +78,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         txtTrainDirection = findViewById(R.id.txtDirection);
         txtNextstop = findViewById(R.id.txtnextStop);
         txtStationInfo = findViewById(R.id.txtStationInfo);
+        txtStationNextDep = findViewById(R.id.txtNextDep);
         txtSpecialCoachesInfo = findViewById(R.id.txtSpecialCoaches);
         txtDelay = findViewById(R.id.txtDelay);
 
@@ -152,11 +147,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     final String endpointId = intent.getStringExtra("endpointId");
                     final String stationInfo = intent.getStringExtra("trainNextStationInfo");
                     final String delay = intent.getStringExtra("trainCurrentDelay");
+                    final String nextDep = intent.getStringExtra("trainNextStationDep");
                     final String specialCoachesInfo = intent.getStringExtra("trainSpecialCoachInfo");
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            refreshView(trainInfo, trainDirection, trainNextStop, trainNextStopRequestNeeded, stationInfo, delay, specialCoachesInfo, endpointId);
+                            refreshView(trainInfo, trainDirection, trainNextStop, trainNextStopRequestNeeded, stationInfo, delay, specialCoachesInfo, endpointId, nextDep);
                         }
                     });
                 } else if (intent.getAction().equals(INTENT_REFRESH_TRAIN_CONNECTED)) {
@@ -302,7 +298,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                             String stationInfo,
                             String delay,
                             String specialCoachesInfo,
-                            String endpointId) {
+                            String endpointId,
+                            String nextDep) {
         mtrainInfo = trainInfo;
         mtrainDirection = trainDirection;
         mtrainNextStop = trainNextStop;
@@ -311,6 +308,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         mstationInfo = stationInfo;
         mdelay = delay;
         mspecialCoachesInfo = specialCoachesInfo;
+        mNextDep = nextDep;
 
         txtTrainInfo.setText(mtrainInfo);
         txtTrainDirection.setText(mtrainDirection);
@@ -318,7 +316,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         txtDelay.setText(mdelay);
         txtSpecialCoachesInfo.setText(mspecialCoachesInfo);
         txtStationInfo.setText(mstationInfo);
-
+        txtStationNextDep.setText(mNextDep);
         if (mtrainNextStopRequestNeeded) {
             btnRequestStop.setVisibility(View.VISIBLE);
         } else {

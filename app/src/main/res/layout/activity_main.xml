@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <android.support.constraint.ConstraintLayout xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:orientation="vertical"
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/drawer_layout"
@@ -40,6 +41,18 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:srcCompat="@drawable/ic_nearby_white" />
+
+    <ImageButton
+        android:id="@+id/btnSoundSwitch"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_marginEnd="8dp"
+        android:background="#0000"
+        android:scaleType="fitCenter"
+        android:visibility="invisible"
+        app:layout_constraintEnd_toStartOf="@+id/btnConnect"
+        app:layout_constraintTop_toTopOf="@+id/btnConnect"
+        app:srcCompat="@drawable/ic_volume_off" />
 
     <ProgressBar
         android:id="@+id/pgBarConnect"
@@ -127,6 +140,26 @@
         app:layout_constraintTop_toBottomOf="@+id/toolbar" />
 
     <TextView
+        android:id="@+id/txtDelayStatic"
+        android:layout_width="120dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="8dp"
+        android:text="Verspätung:"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/txtNextStopstatic" />
+
+    <TextView
+        android:id="@+id/txtDelay"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:text="keine Verspätung"
+        app:layout_constraintStart_toEndOf="@+id/txtDelayStatic"
+        app:layout_constraintTop_toBottomOf="@+id/txtnextStop" />
+
+    <TextView
         android:id="@+id/txtStationInfoStatic"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -167,36 +200,23 @@
         app:layout_constraintTop_toBottomOf="@+id/txtSpecialCoachesStatic" />
 
     <TextView
-        android:id="@+id/txtDelayStatic"
-        android:layout_width="120dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="8dp"
-        android:text="Verspätung:"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/txtNextStopstatic" />
-
-    <TextView
-        android:id="@+id/txtDelay"
+        android:id="@+id/txtNextDepStatic"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
-        android:layout_marginTop="8dp"
-        android:text="keine Verspätung"
-        app:layout_constraintStart_toEndOf="@+id/txtDelayStatic"
-        app:layout_constraintTop_toBottomOf="@+id/txtnextStop" />
+        android:layout_marginStart="16dp"
+        android:text="Nächste Verbindungen"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/txtSpecialCoaches" />
 
-    <ImageButton
-        android:id="@+id/btnSoundSwitch"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
+    <TextView
+        android:id="@+id/txtNextDep"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
         android:layout_marginEnd="8dp"
-        android:background="#0000"
-        android:scaleType="fitCenter"
-        android:visibility="invisible"
-        app:layout_constraintEnd_toStartOf="@+id/btnConnect"
-        app:layout_constraintTop_toTopOf="@+id/btnConnect"
-        app:srcCompat="@drawable/ic_volume_off" />
+        android:layout_marginStart="16dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/txtNextDepStatic" />
 
 
 </android.support.constraint.ConstraintLayout>

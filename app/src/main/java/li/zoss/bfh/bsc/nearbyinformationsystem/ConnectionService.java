@@ -493,6 +493,7 @@ public abstract class ConnectionService extends Service implements GoogleApiClie
 
     @Override
     public void onDestroy() {
+        Nearby.Connections.stopAllEndpoints(mGoogleApiClient);
         if (mGoogleApiClient != null)
             mGoogleApiClient.disconnect();
         super.onDestroy();

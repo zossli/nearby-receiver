@@ -60,7 +60,7 @@ public class NearbyService extends ConnectionService {
     private boolean playSound = false;
 
     //Information to the current Train.
-    private String trainInfo, trainDirection, trainNextStop, trainCoachInfo, currentDelay, stationInfo;
+    private String trainInfo, trainDirection, trainNextStop, trainCoachInfo, currentDelay, stationInfo,stationNextDep;
     private Boolean trainRequestNeeded;
 
     private long[] mVibrationOne = new long[]{100, 200, 300, 400, 500, 600};
@@ -138,6 +138,7 @@ public class NearbyService extends ConnectionService {
                         trainRequestNeeded = jsonObject.get("trainNextStopRequestNeeded").toString().toLowerCase().equals("true");
                         trainNextStop = jsonObject.getString("trainNextStop");
                         stationInfo = jsonObject.getString("trainNextStationInfo");
+                        stationNextDep = jsonObject.getString("trainNextStationDep");
                         notificationDefault(trainNextStop, trainRequestNeeded, stationInfo, endpoint);
                         sendViewRefresh(endpoint);
                         break;
@@ -187,6 +188,7 @@ public class NearbyService extends ConnectionService {
             } catch (IOException e) {
                 e.printStackTrace();
             }
+
 
             try {
                 if (myAudioManager == null)
@@ -265,6 +267,7 @@ public class NearbyService extends ConnectionService {
         intent.putExtra("trainNextStationInfo", stationInfo);
         intent.putExtra("trainCurrentDelay", currentDelay);
         intent.putExtra("trainSpecialCoachInfo", trainCoachInfo);
+        intent.putExtra("trainNextStationDep", stationNextDep);
         intent.setAction(MainActivity.INTENT_REFRESH_TRAIN_INFO);
         sendBroadcast(intent);
     }
