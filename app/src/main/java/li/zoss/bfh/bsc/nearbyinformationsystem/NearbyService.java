@@ -8,7 +8,9 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.BitmapFactory;
+import android.media.AudioAttributes;
 import android.media.AudioDeviceInfo;
+import android.media.AudioFocusRequest;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.net.Uri;
@@ -43,16 +45,19 @@ public class NearbyService extends ConnectionService {
     private State mState = State.UNKNOWN;
     private String TAG = "NearbyService";
 
-    private static final String SERVICE_ID = "li.zoss.bfh.bsc";
+    private static final String SERVICE_ID = "li.zoss.bfh.bsc.appstore";
     private final String NAME = "Receiver " + UUID.randomUUID();
     private NotificationManager mNotificationManager;
 
     private static final String CHANNEL_ID_DEFAULT = "nearby_Information_System_Notification";
     private static final String CHANNEL_ID_DELAY = "nearby_Information_System_Notification_DELAY";
     private static final String CHANNEL_ID_INFO = "nearby_Information_System_Notification_INFO";
+    private static final String CHANNEL_ID_NEXTDEP = "nearby_Information_System_Notification_NEXTDEP";
 
     private static final int NOTIFICIATION_ID_NEXT_STOP = 1;
     private static final int NOTIFICIATION_ID_CURRENT_DELAY = 2;
+    private static final int NOTIFICIATION_ID_INFO = 3;
+    private static final int NOTIFICIATION_ID_CURRENT_NEXTDEP = 4;
 
     private SimpleArrayMap<Long, Payload> incomingPayloads = new SimpleArrayMap<>();
 
@@ -60,7 +65,7 @@ public class NearbyService extends ConnectionService {
     private boolean playSound = false;
 
     //Information to the current Train.
-    private String trainInfo, trainDirection, trainNextStop, trainCoachInfo, currentDelay, stationInfo,stationNextDep;
+    private String trainInfo, trainDirection, trainNextStop, trainCoachInfo, currentDelay, stationInfo, stationNextDep;
     private Boolean trainRequestNeeded;
 
     private long[] mVibrationOne = new long[]{100, 200, 300, 400, 500, 600};
@@ -118,13 +123,37 @@ public class NearbyService extends ConnectionService {
         mBuilder.setStyle(new NotificationCompat.BigTextStyle().bigText(info));
 
         NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-        mNotificationManager.notify(NOTIFICIATION_ID_NEXT_STOP, mBuilder.build());
+        mNotificationManager.notify(NOTIFICIATION_ID_INFO, mBuilder.build());
     }
 
     private void notificationDelay(String currentDelay) {
         NotificationCompat.Builder mBuilder = createNotiBuilder("Verspätungsmeldung", CHANNEL_ID_DELAY, currentDelay);
         NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         mNotificationManager.notify(NOTIFICIATION_ID_CURRENT_DELAY, mBuilder.build());
+    }
+
+    private void notificationNextDep(String nextDep) {
+        if (!stationInfo.isEmpty()) {
+            Intent contentIntent = new Intent(this, MainActivity.class);
+            PendingIntent resultPendingIntent = PendingIntent.getActivity(this, 0, contentIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+            NotificationCompat.Builder mBuilder =
+                    new NotificationCompat.Builder(this, CHANNEL_ID_NEXTDEP)
+                            .setSmallIcon(R.drawable.logoeinfach)
+                            .setLargeIcon(BitmapFactory.decodeResource(getResources(), R.drawable.logo_klein))
+                            .setContentTitle("Nächste Verbindungen")
+                            .setContentText(nextDep)
+                            .setDefaults(Notification.DEFAULT_ALL)
+                            .setVisibility(Notification.VISIBILITY_PUBLIC)
+                            .setContentIntent(resultPendingIntent)
+                            .setAutoCancel(true);
+
+            mBuilder.setStyle(new NotificationCompat.BigTextStyle()
+                    .bigText(nextDep)
+            );
+
+            NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+            mNotificationManager.notify(NOTIFICIATION_ID_CURRENT_NEXTDEP, mBuilder.build());
+        }
     }
 
     @Override
@@ -140,6 +169,7 @@ public class NearbyService extends ConnectionService {
                         stationInfo = jsonObject.getString("trainNextStationInfo");
                         stationNextDep = jsonObject.getString("trainNextStationDep");
                         notificationDefault(trainNextStop, trainRequestNeeded, stationInfo, endpoint);
+                        notificationNextDep(stationNextDep);
                         sendViewRefresh(endpoint);
                         break;
                     case REQUEST_STOP:
@@ -178,6 +208,7 @@ public class NearbyService extends ConnectionService {
                 e.printStackTrace();
             }
         } else if (payload.getType() == Payload.Type.STREAM) {
+            Log.i(TAG, "onReceive: hitted Streamtype");
             File file = null;
             try {
                 InputStream instream = payload.asStream().asInputStream();
@@ -210,23 +241,17 @@ public class NearbyService extends ConnectionService {
                         break;
                 }
                 if (canPlay) {
+
                     MediaPlayer mediaPlayer = new MediaPlayer();
                     mediaPlayer.setDataSource(this, Uri.fromFile(file));
                     mediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
                         @Override
                         public void onPrepared(MediaPlayer mp) {
-                            mp.start();
+                            Log.i(TAG, "onPrepared: finished");
+                            startPlayback(mp);
                         }
                     });
-                    mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
-                        @Override
-                        public void onCompletion(MediaPlayer mp) {
-                            Log.i(TAG, "onCompletion: Player will be deleted");
-                            mp.stop();
-                            mp.reset();
-                            mp.release();
-                        }
-                    });
+
                     mediaPlayer.prepareAsync();
                 } else {
                     playSound = false;
@@ -240,6 +265,51 @@ public class NearbyService extends ConnectionService {
         }
     }
 
+    private void startPlayback(MediaPlayer mp) {
+
+        if (myAudioManager == null)
+            myAudioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
+
+        final AudioManager.OnAudioFocusChangeListener afChangeListener = new AudioManager.OnAudioFocusChangeListener() {
+            public void onAudioFocusChange(int focusChange) {
+                if (focusChange == AudioManager.AUDIOFOCUS_LOSS) {
+                    Log.i(TAG, "onAudioFocusChange: LOSS");
+                }
+                else if (focusChange == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT) {
+                    Log.i(TAG, "onAudioFocusChange: loss-transient");
+                    // Pause playback
+                } else if (focusChange == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK) {
+                    Log.i(TAG, "onAudioFocusChange: loss transient can duck");
+                    // Lower the volume, keep playing
+                } else if (focusChange == AudioManager.AUDIOFOCUS_GAIN) {
+                    Log.i(TAG, "onAudioFocusChange: gain");
+                    // Your app has been granted audio focus again
+                    // Raise volume to normal, restart playback if necessary
+                }
+            }};
+
+        int result = myAudioManager.requestAudioFocus(afChangeListener,
+                // Use the music stream.
+                AudioManager.STREAM_MUSIC,
+                // Request permanent focus.
+                AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK);
+
+        mp.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+            @Override
+            public void onCompletion(MediaPlayer mp) {
+                Log.i(TAG, "onCompletion: Player will be deleted");
+                mp.stop();
+                mp.reset();
+                mp.release();
+                myAudioManager.abandonAudioFocus(afChangeListener);
+
+            }
+        });
+        if (result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
+            mp.start();
+        }
+    }
+
 
     private void sendSoundIntent() {
         Intent intent = new Intent();
@@ -248,14 +318,6 @@ public class NearbyService extends ConnectionService {
         sendBroadcast(intent);
     }
 
-    public static File stream2file(InputStream in) throws IOException {
-        final File tempFile = File.createTempFile("stream2file", ".tmp");
-        tempFile.deleteOnExit();
-        try (FileOutputStream out = new FileOutputStream(tempFile)) {
-            IOUtils.copy(in, out);
-        }
-        return tempFile;
-    }
 
     public void sendViewRefresh(Endpoint endpoint) {
         Intent intent = new Intent();
@@ -449,6 +511,18 @@ public class NearbyService extends ConnectionService {
             mChannelInfo.setSound(null, null);
             mChannelInfo.setVibrationPattern(mVibrationTwo);
             mNotificationManager.createNotificationChannel(mChannelInfo);
+        }
+
+        // The user-visible name of the channel.
+        name = "Nächste Verbindungen";
+        // The user-visible description of the channel.
+        description = "Status zu den nächsten Verbindungen";
+        importance = NotificationManager.IMPORTANCE_MIN;
+        NotificationChannel mChannelDep = null;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            mChannelDep = new NotificationChannel(CHANNEL_ID_NEXTDEP, name, importance);
+            mChannelDep.setDescription(description);
+            mNotificationManager.createNotificationChannel(mChannelDep);
         }
     }
 
