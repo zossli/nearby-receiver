@@ -96,7 +96,7 @@ public abstract class ConnectionService extends Service implements GoogleApiClie
                             .addOnConnectionFailedListener(this)
                             .build();
             mGoogleApiClient.connect();
-        } else if (mGoogleApiClient.isConnected())
+        } else if (!mGoogleApiClient.isConnected())
             mGoogleApiClient.connect();
 
         return START_STICKY;
@@ -378,8 +378,10 @@ public abstract class ConnectionService extends Service implements GoogleApiClie
     }
 
     protected void disconnectFromAllEndpoints() {
-        for (Endpoint endpoint : mEstablishedConnections.values()) {
-            Nearby.Connections.disconnectFromEndpoint(mGoogleApiClient, endpoint.getId());
+        if(mGoogleApiClient.isConnected()) {
+            for (Endpoint endpoint : mEstablishedConnections.values()) {
+                Nearby.Connections.disconnectFromEndpoint(mGoogleApiClient, endpoint.getId());
+            }
         }
         mEstablishedConnections.clear();
     }
@@ -493,9 +495,10 @@ public abstract class ConnectionService extends Service implements GoogleApiClie
 
     @Override
     public void onDestroy() {
-        Nearby.Connections.stopAllEndpoints(mGoogleApiClient);
         if (mGoogleApiClient != null)
-            mGoogleApiClient.disconnect();
+            if (mGoogleApiClient.isConnected())
+                Nearby.Connections.stopAllEndpoints(mGoogleApiClient);
+                mGoogleApiClient.disconnect();
         super.onDestroy();
     }
 
