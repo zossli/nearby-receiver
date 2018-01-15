@@ -230,8 +230,10 @@ public class NearbyService extends ConnectionService {
                 allowedDevices.add(AudioDeviceInfo.TYPE_BLUETOOTH_SCO);
                 allowedDevices.add(AudioDeviceInfo.TYPE_WIRED_HEADPHONES);
                 allowedDevices.add(AudioDeviceInfo.TYPE_WIRED_HEADSET);
+                allowedDevices.add(AudioDeviceInfo.TYPE_LINE_ANALOG);
                 AudioDeviceInfo[] devices = myAudioManager.getDevices(AudioManager.GET_DEVICES_OUTPUTS);
                 for (int i = 0; devices.length > i; i++) {
+                    Log.i(TAG, "connected Audiodevice: "+devices[i].getType());
                     for (int device : allowedDevices) {
                         canPlay = device == devices[i].getType();
                         if (canPlay)
