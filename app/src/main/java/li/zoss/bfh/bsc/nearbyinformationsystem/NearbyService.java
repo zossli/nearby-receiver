@@ -45,7 +45,7 @@ public class NearbyService extends ConnectionService {
     private State mState = State.UNKNOWN;
     private String TAG = "NearbyService";
 
-    private static final String SERVICE_ID = "li.zoss.bfh.bsc.appstore";
+    private static final String SERVICE_ID = "li.zoss.bfh.bsc";
     private final String NAME = "Receiver " + UUID.randomUUID();
     private NotificationManager mNotificationManager;
 
