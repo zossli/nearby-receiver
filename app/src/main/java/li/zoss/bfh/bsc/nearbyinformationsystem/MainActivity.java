@@ -225,7 +225,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
-        outState.putBoolean("INTENT_START_WAS_REQUESTED", true);
+        outState.putBoolean("INTENT_START_WAS_REQUESTED", startWasRequested);
         Log.i(TAG, "onSaveInstanceState: ");
     }
     @Override
@@ -241,9 +241,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     protected void onPause() {
         super.onPause();
-        Log.i(TAG, "onPause: ");
-        startWasRequested = true;
-
     }
     @Override
     public void onClick(View v) {
