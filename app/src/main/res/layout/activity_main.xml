@@ -59,6 +59,7 @@
         style="@style/Widget.AppCompat.ProgressBar"
         android:layout_width="40dp"
         android:layout_height="40dp"
+        android:contentDescription="Null"
         android:visibility="gone"
         app:layout_constraintEnd_toEndOf="@+id/btnConnect"
         app:layout_constraintTop_toTopOf="@+id/btnConnect" />
@@ -151,8 +152,8 @@
 
     <TextView
         android:id="@+id/txtDelay"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="120dp"
+        android:layout_height="20dp"
         android:layout_marginStart="8dp"
         android:layout_marginTop="8dp"
         android:text="keine Verspätung"
@@ -164,7 +165,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="16dp"
         android:text="Bahnhofsinfo:"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/txtDelayStatic" />
@@ -184,7 +185,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="16dp"
         android:text="Informationen zu diesem Wagen:"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/txtStationInfo" />
@@ -204,6 +205,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
+        android:layout_marginTop="16dp"
         android:text="Nächste Verbindungen"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/txtSpecialCoaches" />
